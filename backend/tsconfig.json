@@ -17,5 +17,11 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.db", "**/*.db-*", "**/*.sqlite*"],
+  "watchOptions": {
+    "excludeDirectories": ["node_modules", "dist"],
+    "excludeFiles": ["**/*.db", "**/*.db-journal", "**/*.db-shm", "**/*.db-wal"]
   }
 }

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 import { AuthModule } from './auth/auth.module';
 import { DevicesModule } from './devices/devices.module';
 import { EventsModule } from './events/events.module';
@@ -10,14 +12,18 @@ import { MqttModule } from './mqtt/mqtt.module';
 import { Device } from './entities/device.entity';
 import { Event } from './entities/event.entity';
 
+const dbPath = process.env.DATABASE_PATH || 'data/dev.db';
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
-      database: process.env.DATABASE_PATH || 'dev.db',
+      database: dbPath,
       entities: [Device, Event],
-      synchronize: true,   // crée les tables automatiquement (dev uniquement)
+      synchronize: true,
       logging: false,
     }),
     AuthModule,

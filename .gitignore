@@ -13,6 +13,7 @@ build/
 *.db-journal
 *.db-shm
 *.db-wal
+backend/data/
 
 # (Le client Prisma généré est dans node_modules, déjà ignoré)
 
