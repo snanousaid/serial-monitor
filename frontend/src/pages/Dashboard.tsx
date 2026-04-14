@@ -238,9 +238,9 @@ const Dashboard: React.FC = () => {
                               </td>
                               <td className="px-5 py-3.5">
                                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                                  device.type === 'MQTT'
-                                    ? 'bg-purple-950 text-purple-400'
-                                    : 'bg-green-950 text-green-400'
+                                  device.type === 'MQTT'       ? 'bg-purple-950 text-purple-400' :
+                                  device.type === 'Simulation' ? 'bg-yellow-950 text-yellow-400' :
+                                                                  'bg-green-950 text-green-400'
                                 }`}>
                                   {device.type}
                                 </span>

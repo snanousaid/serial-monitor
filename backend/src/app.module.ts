@@ -9,6 +9,9 @@ import { EventsModule } from './events/events.module';
 import { SerialModule } from './serial/serial.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { MqttModule } from './mqtt/mqtt.module';
+import { SimulationModule } from './simulation/simulation.module';
+import { StatsModule } from './stats/stats.module';
+import { AppConfigModule } from './config/config.module';
 import { Device } from './entities/device.entity';
 import { Event } from './entities/event.entity';
 
@@ -32,6 +35,9 @@ if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
     SerialModule,
     GatewayModule,
     MqttModule,
+    SimulationModule,
+    StatsModule,
+    AppConfigModule,
   ],
 })
 export class AppModule {}
