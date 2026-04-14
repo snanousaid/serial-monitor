@@ -1,0 +1,35 @@
+# Dépendances
+node_modules/
+*/node_modules/
+
+# Build
+dist/
+build/
+*/dist/
+*/build/
+
+# Base de données SQLite
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Prisma migrations générées (garder le dossier mais ignorer le binaire)
+backend/node_modules/.prisma/
+
+# Variables d'environnement (NE JAMAIS committer)
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite cache
+.vite/
+frontend/.vite/
