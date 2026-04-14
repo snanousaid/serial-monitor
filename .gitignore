@@ -18,9 +18,9 @@ build/
 backend/node_modules/.prisma/
 
 # Variables d'environnement (NE JAMAIS committer)
-.env
-.env.local
-.env.production
+# .env
+# .env.local
+# .env.production
 
 # Logs
 *.log
