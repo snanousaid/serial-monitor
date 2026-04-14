@@ -1,17 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Event } from '../entities/event.entity';
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Event) private readonly eventRepo: Repository<Event>,
+  ) {}
 
   async findRecent(limit = 100) {
-    return this.prisma.event.findMany({
-      orderBy: { createdAt: 'desc' },
+    const events = await this.eventRepo.find({
+      order: { createdAt: 'DESC' },
       take: limit,
-      include: {
-        device: { select: { deviceId: true, type: true } },
-      },
+      relations: ['device'],
     });
+
+    return events.map((e) => ({
+      id: e.id,
+      data: e.data,
+      createdAt: e.createdAt,
+      device: e.device ? { deviceId: e.device.deviceId, type: e.device.type } : null,
+    }));
   }
 }

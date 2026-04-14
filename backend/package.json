@@ -6,16 +6,8 @@
     "build": "nest build",
     "start": "node dist/main",
     "start:dev": "nest start --watch",
-
     "env:windows": "copy .env.windows .env",
-    "env:arm32":   "cp .env.arm32 .env",
-
-    "prisma:generate":   "prisma generate",
-    "prisma:push":       "prisma db push --skip-generate",
-    "prisma:migrate":    "prisma migrate dev --name init",
-
-    "install:arm32":     "PRISMA_SKIP_POSTINSTALL_GENERATE=1 npm install --ignore-scripts",
-    "start:arm32":       "node dist/main"
+    "env:arm32":   "cp .env.arm32 .env"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
@@ -24,27 +16,29 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.3.0",
     "@nestjs/platform-socket.io": "^10.3.0",
+    "@nestjs/typeorm": "^10.0.2",
     "@nestjs/websockets": "^10.3.0",
-    "@prisma/client": "^5.10.0",
     "@nestjs/config": "^3.2.0",
     "bcryptjs": "^2.4.3",
-    "mqtt": "^5.5.0",
+    "better-sqlite3": "^9.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "mqtt": "^5.5.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
     "serialport": "^12.0.0",
-    "socket.io": "^4.7.4"
+    "socket.io": "^4.7.4",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.3.0",
     "@nestjs/schematics": "^10.1.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.8",
     "@types/node": "^20.11.0",
     "@types/passport-jwt": "^4.0.1",
-    "prisma": "^5.10.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }

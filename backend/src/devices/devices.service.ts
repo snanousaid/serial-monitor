@@ -1,37 +1,54 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Device } from '../entities/device.entity';
+import { Event } from '../entities/event.entity';
 
 @Injectable()
 export class DevicesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Device) private readonly deviceRepo: Repository<Device>,
+    @InjectRepository(Event)  private readonly eventRepo:  Repository<Event>,
+  ) {}
 
   async findAll() {
-    return this.prisma.device.findMany({
-      include: {
-        _count: { select: { events: true } },
-      },
-      orderBy: { id: 'asc' },
-    });
+    const devices = await this.deviceRepo
+      .createQueryBuilder('d')
+      .loadRelationCountAndMap('d._count_events', 'd.events')
+      .orderBy('d.id', 'ASC')
+      .getMany();
+
+    return devices.map((d: any) => ({
+      id: d.id,
+      deviceId: d.deviceId,
+      type: d.type,
+      _count: { events: d._count_events ?? 0 },
+    }));
   }
 
   async findOne(id: number) {
-    return this.prisma.device.findUnique({
-      where: { id },
-      include: { _count: { select: { events: true } } },
-    });
+    const d: any = await this.deviceRepo
+      .createQueryBuilder('d')
+      .loadRelationCountAndMap('d._count_events', 'd.events')
+      .where('d.id = :id', { id })
+      .getOne();
+
+    if (!d) return null;
+    return {
+      id: d.id,
+      deviceId: d.deviceId,
+      type: d.type,
+      _count: { events: d._count_events ?? 0 },
+    };
   }
 
   async findEvents(deviceId: number, page = 1, limit = 50) {
-    const skip = (page - 1) * limit;
-    const [events, total] = await Promise.all([
-      this.prisma.event.findMany({
-        where: { deviceId },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.event.count({ where: { deviceId } }),
-    ]);
+    const [events, total] = await this.eventRepo.findAndCount({
+      where: { deviceId },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return { events, total, page, limit, totalPages: Math.ceil(total / limit) };
   }

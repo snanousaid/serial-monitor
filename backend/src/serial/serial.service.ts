@@ -1,15 +1,16 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { SerialPort } from 'serialport';
-import { PrismaService } from '../prisma/prisma.service';
+import { Device } from '../entities/device.entity';
+import { Event } from '../entities/event.entity';
 import { SerialGateway } from '../gateway/serial.gateway';
 
 /**
  * Format JSON attendu depuis le port série (une ligne par trame) :
- *   {"deviceId":"ABC123","data":{"temperature":25.5,"humidity":60}}
+ *   {"deviceId":"ABC123","temperature":25.5,"humidity":60}
  *
  * Chaque trame doit se terminer par '\n' (newline-delimited JSON).
- * Le champ "deviceId" est obligatoire.
- * Le champ "data" peut être n'importe quel objet JSON ou string.
  */
 
 @Injectable()
@@ -19,7 +20,8 @@ export class SerialService implements OnModuleInit {
   private lineBuffer = '';
 
   constructor(
-    private readonly prisma: PrismaService,
+    @InjectRepository(Device) private readonly deviceRepo: Repository<Device>,
+    @InjectRepository(Event)  private readonly eventRepo:  Repository<Event>,
     private readonly gateway: SerialGateway,
   ) {}
 
@@ -45,7 +47,6 @@ export class SerialService implements OnModuleInit {
     });
 
     this.port.on('data', (chunk: Buffer) => {
-      // Accumule les caractères jusqu'au '\n' (fin de trame JSON)
       this.lineBuffer += chunk.toString('utf8');
       this.processLines();
     });
@@ -55,14 +56,8 @@ export class SerialService implements OnModuleInit {
     });
   }
 
-  /**
-   * Découpe le buffer en lignes et traite chaque ligne JSON complète.
-   * Une trame = une ligne terminée par '\n'.
-   */
   private processLines() {
     const lines = this.lineBuffer.split('\n');
-
-    // La dernière entrée est soit vide (si '\n' final) soit une trame incomplète
     this.lineBuffer = lines.pop() ?? '';
 
     for (const line of lines) {
@@ -76,8 +71,6 @@ export class SerialService implements OnModuleInit {
   }
 
   /**
-   * Parse la ligne JSON et sauvegarde en base.
-   *
    * Logique EXCLUSIVEMENT côté backend :
    *  1. Parse le JSON reçu
    *  2. Extrait le deviceId
@@ -87,7 +80,6 @@ export class SerialService implements OnModuleInit {
    *  6. Émet via WebSocket vers le frontend
    */
   private async parseAndSave(rawLine: string) {
-    // ── 1. Parse JSON ──
     let parsed: Record<string, any>;
     try {
       parsed = JSON.parse(rawLine);
@@ -96,51 +88,39 @@ export class SerialService implements OnModuleInit {
       return;
     }
 
-    // ── 2. Extraction du deviceId (obligatoire) ──
     const deviceId = parsed.deviceId ?? parsed.device_id ?? parsed.id;
     if (!deviceId || typeof deviceId !== 'string') {
       this.logger.warn(`Champ "deviceId" manquant ou invalide : ${rawLine}`);
       return;
     }
 
-    // ── 3. Payload data : tout sauf deviceId, sérialisé en JSON string ──
-    const { deviceId: _, device_id: __, id: ___, ...rest } = parsed;
+    const { deviceId: _a, device_id: _b, id: _c, ...rest } = parsed;
     const dataString = Object.keys(rest).length > 0
       ? JSON.stringify(rest)
       : rawLine;
 
-    this.logger.debug(`JSON reçu — deviceId: ${deviceId}, data: ${dataString}`);
-
-    // ── 4. Vérification & création du Device (logique EXCLUSIVEMENT backend) ──
-    let device = await this.prisma.device.findUnique({
-      where: { deviceId },
-    });
+    // ── Vérification & création du Device (TypeORM) ──
+    let device = await this.deviceRepo.findOne({ where: { deviceId } });
 
     if (!device) {
-      device = await this.prisma.device.create({
-        data: { deviceId, type: 'Serial' },
-      });
+      device = this.deviceRepo.create({ deviceId, type: 'Serial' });
+      device = await this.deviceRepo.save(device);
       this.logger.log(`Nouveau device créé : ${deviceId} (id=${device.id})`);
     }
 
-    // ── 5. Sauvegarde de l'Event lié au Device ──
-    const event = await this.prisma.event.create({
-      data: {
-        data: dataString,
-        deviceId: device.id,
-      },
-    });
+    // ── Sauvegarde de l'Event ──
+    const event = await this.eventRepo.save(
+      this.eventRepo.create({ data: dataString, deviceId: device.id }),
+    );
 
     this.logger.log(`Event #${event.id} sauvegardé pour device "${deviceId}"`);
 
-    // ── 6. Émission WebSocket vers le frontend ──
+    // ── Émission WebSocket ──
     this.gateway.emitNewEvent({ event, device });
   }
 
-  // ── Simulation : envoyer un JSON directement sans matériel ──
   simulateJson(payload: Record<string, any>) {
-    const line = JSON.stringify(payload);
-    this.parseAndSave(line).catch((e) =>
+    this.parseAndSave(JSON.stringify(payload)).catch((e) =>
       this.logger.error(`Erreur simulation : ${e.message}`),
     );
   }
