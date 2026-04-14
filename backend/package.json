@@ -6,9 +6,16 @@
     "build": "nest build",
     "start": "node dist/main",
     "start:dev": "nest start --watch",
-    "prisma:migrate": "npx prisma migrate dev --name init",
-    "prisma:generate": "npx prisma generate",
-    "prisma:studio": "npx prisma studio"
+
+    "env:windows": "copy .env.windows .env",
+    "env:arm32":   "cp .env.arm32 .env",
+
+    "prisma:generate":   "prisma generate",
+    "prisma:push":       "prisma db push --skip-generate",
+    "prisma:migrate":    "prisma migrate dev --name init",
+
+    "install:arm32":     "PRISMA_SKIP_POSTINSTALL_GENERATE=1 npm install --ignore-scripts",
+    "start:arm32":       "node dist/main"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

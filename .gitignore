@@ -14,8 +14,7 @@ build/
 *.db-shm
 *.db-wal
 
-# Prisma migrations générées (garder le dossier mais ignorer le binaire)
-backend/node_modules/.prisma/
+# (Le client Prisma généré est dans node_modules, déjà ignoré)
 
 # Variables d'environnement (NE JAMAIS committer)
 # .env
