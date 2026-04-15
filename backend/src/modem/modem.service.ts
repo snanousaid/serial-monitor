@@ -49,26 +49,32 @@ export class ModemService {
         { path: MODEM_PORT, baudRate: MODEM_BAUD, autoOpen: false },
       );
       let buffer = '';
-      const cleanup = () => {
-        try { port.removeAllListeners(); port.close(() => {}); } catch {}
+      let done = false;
+      const finish = (err: Error | null, value?: string) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        try { port.removeAllListeners(); } catch {}
+        port.close(() => {
+          if (err) reject(err);
+          else resolve(value ?? buffer.trim());
+        });
       };
-      const timer = setTimeout(() => {
-        cleanup();
-        reject(new Error(`Timeout sur commande AT: ${cmd}`));
-      }, timeoutMs);
+      const timer = setTimeout(
+        () => finish(new Error(`Timeout sur commande AT: ${cmd}`)),
+        timeoutMs,
+      );
 
       port.open((err) => {
-        if (err) { clearTimeout(timer); return reject(err); }
+        if (err) return finish(err);
         port.on('data', (chunk: Buffer) => {
           buffer += chunk.toString('utf8');
           if (/\r\n(OK|ERROR)\r\n/.test(buffer) || /\+CME ERROR/.test(buffer)) {
-            clearTimeout(timer);
-            cleanup();
-            resolve(buffer.trim());
+            finish(null);
           }
         });
         port.write(`${cmd}\r`, (werr) => {
-          if (werr) { clearTimeout(timer); cleanup(); reject(werr); }
+          if (werr) finish(werr);
         });
       });
     });
