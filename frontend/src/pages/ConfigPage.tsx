@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getConfig, toggleSimulation } from '../services/api';
+import ModemPanel from '../components/ModemPanel';
 
 const Field: React.FC<{ label: string; value: any }> = ({ label, value }) => (
   <div className="flex justify-between py-2 border-b last:border-0 text-sm">
@@ -77,6 +78,8 @@ const ConfigPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <ModemPanel />
     </div>
   );
 };

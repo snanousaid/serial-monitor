@@ -14,6 +14,7 @@ import { MqttModule } from './mqtt/mqtt.module';
 import { SimulationModule } from './simulation/simulation.module';
 import { StatsModule } from './stats/stats.module';
 import { AppConfigModule } from './config/config.module';
+import { ModemModule } from './modem/modem.module';
 import { Device } from './entities/device.entity';
 import { Event } from './entities/event.entity';
 
@@ -26,7 +27,7 @@ if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
     ConfigModule.forRoot({ isGlobal: true }),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'build'),
-      exclude: ['/api/(.*)'],
+      exclude: ['/api/v2/(.*)'],
     }),
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
@@ -44,6 +45,7 @@ if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
     SimulationModule,
     StatsModule,
     AppConfigModule,
+    ModemModule,
   ],
 })
 export class AppModule {}

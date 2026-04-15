@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: 'http://localhost:3000' });
+const API_BASE = import.meta.env.DEV ? 'http://localhost/api/v2' : '/api/v2';
+const api = axios.create({ baseURL: API_BASE });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
@@ -103,5 +104,32 @@ export const getConfig = async () =>
 
 export const toggleSimulation = async (enabled: boolean) =>
   (await api.post('/config/simulation', { enabled })).data as { enabled: boolean };
+
+// ── Modem / SIM ──
+export const getModemPlatform = async () =>
+  (await api.get('/modem/platform')).data as { linux: boolean };
+
+export interface NmConnection { name: string; uuid: string; type: string; device: string; }
+export const getModemConnections = async () =>
+  (await api.get('/modem/connections')).data as NmConnection[];
+
+export const getModemStatus = async () =>
+  (await api.get('/modem/status')).data as {
+    linux: boolean;
+    port: string;
+    baudRate: number;
+    cpin?: string; cpinError?: string;
+    iccid?: string | null; iccidError?: string;
+    imsi?: string | null; imsiError?: string;
+  };
+
+export const unlockSimPin = async (pin: string) =>
+  (await api.post('/modem/unlock', { pin })).data as { ok: boolean; response: string };
+
+export const restartModem = async () =>
+  (await api.post('/modem/restart-modem')).data as { ok: boolean; response: string };
+
+export const restartPppd = async () =>
+  (await api.post('/modem/restart-pppd')).data as { ok: boolean };
 
 export default api;

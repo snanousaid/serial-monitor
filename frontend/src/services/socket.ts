@@ -7,7 +7,8 @@ export const connectSocket = (): Socket => {
 
   const token = localStorage.getItem('access_token');
 
-  socket = io('http://localhost:3000/serial', {
+  const url = import.meta.env.DEV ? 'http://localhost/serial' : '/serial';
+  socket = io(url, {
     auth: { token },
     transports: ['websocket'],
   });
