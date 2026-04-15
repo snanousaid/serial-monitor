@@ -6,7 +6,7 @@ import * as os from 'os';
 
 const execP = promisify(exec);
 
-const MODEM_PORT = process.env.MODEM_PORT || '/dev/ttyUSB2';
+const MODEM_PORT = process.env.MODEM_PORT || '/dev/ttyUSB3';
 const MODEM_BAUD = parseInt(process.env.MODEM_BAUD || '115200', 10);
 
 export interface NmConnection {
