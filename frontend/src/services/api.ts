@@ -8,6 +8,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err?.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('username');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(err);
+  },
+);
+
 // ── Auth ──
 export const login = async (username: string, password: string) => {
   const res = await api.post('/auth/login', { username, password });

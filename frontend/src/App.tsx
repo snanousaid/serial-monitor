@@ -2,8 +2,10 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
-import Dashboard from './pages/Dashboard';
-import DeviceEventsPage from './pages/DeviceEventsPage';
+import MainLayout from './layouts/MainLayout';
+import DashboardPage from './pages/DashboardPage';
+import DataPage from './pages/DataPage';
+import ConfigPage from './pages/ConfigPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -12,7 +14,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated } = useAuth();
-
   return (
     <Routes>
       <Route
@@ -20,21 +21,16 @@ const AppRoutes: React.FC = () => {
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
       />
       <Route
-        path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <MainLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/devices/:id/events"
-        element={
-          <ProtectedRoute>
-            <DeviceEventsPage />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/data" element={<DataPage />} />
+        <Route path="/config" element={<ConfigPage />} />
+      </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );

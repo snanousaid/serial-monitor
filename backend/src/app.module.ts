@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AuthModule } from './auth/auth.module';
@@ -22,6 +24,10 @@ if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'build'),
+      exclude: ['/api/(.*)'],
+    }),
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
       database: dbPath,
