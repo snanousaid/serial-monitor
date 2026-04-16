@@ -4,6 +4,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ServerOptions } from 'socket.io';
 import * as express from 'express';
 import { AppModule } from './app.module';
+import { ensureMqttCredsFromMac } from './bootstrap/mac-mqtt-creds';
 
 class SocketIoAdapter extends IoAdapter {
   createIOServer(port: number, options?: ServerOptions) {
@@ -15,6 +16,7 @@ class SocketIoAdapter extends IoAdapter {
 }
 
 async function bootstrap() {
+  ensureMqttCredsFromMac();
   const app = await NestFactory.create(AppModule, { bodyParser: false });
   app.enableCors();
   app.setGlobalPrefix('api/v2');
