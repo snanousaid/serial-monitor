@@ -29,6 +29,17 @@ export class SerialService implements OnModuleInit {
     this.openPort();
   }
 
+  async restart() {
+    await new Promise<void>((resolve) => {
+      if (!this.port) return resolve();
+      try { this.port.removeAllListeners(); } catch {}
+      this.port.close(() => resolve());
+    });
+    this.port = null;
+    this.lineBuffer = '';
+    this.openPort();
+  }
+
   private openPort() {
     const portPath = process.env.SERIAL_PORT || 'COM3';
     const baudRate = parseInt(process.env.SERIAL_BAUD_RATE || '9600', 10);

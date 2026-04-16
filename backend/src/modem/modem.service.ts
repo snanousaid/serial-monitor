@@ -120,6 +120,19 @@ export class ModemService {
     return { ok: true, response: res };
   }
 
+  async ping(host: string) {
+    this.ensureLinux();
+    if (!/^[a-zA-Z0-9._-]+$/.test(host)) {
+      throw new BadRequestException('Host invalide');
+    }
+    try {
+      const { stdout, stderr } = await execP(`sudo ping -I ppp0 -c 3 ${host}`);
+      return { ok: true, stdout, stderr };
+    } catch (e: any) {
+      return { ok: false, stdout: e.stdout ?? '', stderr: e.stderr ?? e.message };
+    }
+  }
+
   async restartPppd() {
     this.ensureLinux();
     const { stdout, stderr } = await execP('sudo systemctl restart quectel-pppd.service');

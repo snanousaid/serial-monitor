@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   getModemPlatform, getModemConnections, getModemStatus,
-  unlockSimPin, restartModem, restartPppd,
+  unlockSimPin, restartModem, restartPppd, pingModem,
   NmConnection,
 } from '../services/api';
 
@@ -10,6 +10,7 @@ const ModemPanel: React.FC = () => {
   const [conns, setConns] = useState<NmConnection[]>([]);
   const [status, setStatus] = useState<any>(null);
   const [pin, setPin] = useState('');
+  const [pingHost, setPingHost] = useState('8.8.8.8');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -109,6 +110,24 @@ const ModemPanel: React.FC = () => {
             onClick={() => run(() => unlockSimPin(pin), 'Unlock PIN')}
             className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
           >Envoyer</button>
+        </div>
+      </div>
+
+      <div className="border-t pt-4 space-y-2">
+        <p className="text-xs uppercase tracking-wider text-slate-500">Ping via ppp0</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="8.8.8.8 ou example.com"
+            value={pingHost}
+            onChange={(e) => setPingHost(e.target.value)}
+            className="border rounded px-3 py-2 text-sm flex-1 font-mono"
+          />
+          <button
+            disabled={busy || !pingHost}
+            onClick={() => run(() => pingModem(pingHost), `Ping ${pingHost}`)}
+            className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+          >Ping</button>
         </div>
       </div>
 

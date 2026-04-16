@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { AppConfigService } from './config.service';
+import { AppConfigService, SerialConfig, MqttConfig } from './config.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -13,5 +13,15 @@ export class ConfigController {
   @Post('simulation')
   toggle(@Body() body: { enabled: boolean }) {
     return this.config.toggleSimulation(body.enabled);
+  }
+
+  @Post('serial')
+  updateSerial(@Body() body: SerialConfig) {
+    return this.config.updateSerial(body);
+  }
+
+  @Post('mqtt')
+  updateMqtt(@Body() body: MqttConfig) {
+    return this.config.updateMqtt(body);
   }
 }

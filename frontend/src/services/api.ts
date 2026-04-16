@@ -94,13 +94,23 @@ export const getTopDevices = async () =>
   }>;
 
 // ── Config ──
+export interface SerialConfig { port: string; baudRate: number; }
+export interface MqttConfig {
+  broker: string; topic: string; clientId: string;
+  username?: string; password?: string; hasAuth?: boolean;
+}
+
 export const getConfig = async () =>
   (await api.get('/config')).data as {
-    serial: { port: string; baudRate: number };
-    mqtt: { broker: string; topic: string; clientId: string; hasAuth: boolean };
-    simulation: { enabled: boolean };
-    database: { path: string };
+    serial: SerialConfig;
+    mqtt: MqttConfig;
   };
+
+export const updateSerialConfig = async (cfg: SerialConfig) =>
+  (await api.post('/config/serial', cfg)).data as { ok: boolean };
+
+export const updateMqttConfig = async (cfg: MqttConfig) =>
+  (await api.post('/config/mqtt', cfg)).data as { ok: boolean };
 
 export const toggleSimulation = async (enabled: boolean) =>
   (await api.post('/config/simulation', { enabled })).data as { enabled: boolean };
@@ -125,6 +135,11 @@ export const getModemStatus = async () =>
 
 export const unlockSimPin = async (pin: string) =>
   (await api.post('/modem/unlock', { pin })).data as { ok: boolean; response: string };
+
+export const pingModem = async (host: string) =>
+  (await api.post('/modem/ping', { host })).data as {
+    ok: boolean; stdout: string; stderr: string;
+  };
 
 export const restartModem = async () =>
   (await api.post('/modem/restart-modem')).data as { ok: boolean; response: string };

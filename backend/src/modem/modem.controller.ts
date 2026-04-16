@@ -32,6 +32,11 @@ export class ModemController {
     return this.modem.restartModem();
   }
 
+  @Post('ping')
+  ping(@Body() body: { host: string }) {
+    return this.modem.ping(body.host);
+  }
+
   @Post('restart-pppd')
   restartPppd() {
     return this.modem.restartPppd();

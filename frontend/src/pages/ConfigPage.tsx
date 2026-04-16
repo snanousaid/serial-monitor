@@ -1,83 +1,135 @@
 import React, { useEffect, useState } from 'react';
-import { getConfig, toggleSimulation } from '../services/api';
+import {
+  getConfig, updateSerialConfig, updateMqttConfig,
+  SerialConfig, MqttConfig,
+} from '../services/api';
 import ModemPanel from '../components/ModemPanel';
 
-const Field: React.FC<{ label: string; value: any }> = ({ label, value }) => (
-  <div className="flex justify-between py-2 border-b last:border-0 text-sm">
-    <span className="text-slate-500">{label}</span>
-    <span className="font-mono text-slate-800">{String(value)}</span>
-  </div>
-);
-
 const ConfigPage: React.FC = () => {
-  const [cfg, setCfg] = useState<any>(null);
+  const [serial, setSerial] = useState<SerialConfig | null>(null);
+  const [mqtt, setMqtt] = useState<MqttConfig | null>(null);
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  const load = () => getConfig().then(setCfg);
+  const load = async () => {
+    const cfg = await getConfig();
+    setSerial(cfg.serial);
+    setMqtt({ ...cfg.mqtt, username: cfg.mqtt.username ?? '', password: '' });
+  };
   useEffect(() => { load(); }, []);
 
-  const onToggle = async () => {
-    if (!cfg) return;
-    setBusy(true);
+  const saveSerial = async () => {
+    if (!serial) return;
+    setBusy(true); setMsg(null);
     try {
-      const res = await toggleSimulation(!cfg.simulation.enabled);
-      setCfg({ ...cfg, simulation: { enabled: res.enabled } });
-    } finally {
-      setBusy(false);
-    }
+      await updateSerialConfig(serial);
+      setMsg('Configuration série mise à jour');
+    } catch (e: any) {
+      setMsg(`Erreur : ${e?.response?.data?.message ?? e.message}`);
+    } finally { setBusy(false); }
   };
 
-  if (!cfg) return <p className="text-slate-500">Chargement…</p>;
+  const saveMqtt = async () => {
+    if (!mqtt) return;
+    setBusy(true); setMsg(null);
+    try {
+      await updateMqttConfig(mqtt);
+      setMsg('Configuration MQTT mise à jour');
+    } catch (e: any) {
+      setMsg(`Erreur : ${e?.response?.data?.message ?? e.message}`);
+    } finally { setBusy(false); }
+  };
+
+  if (!serial || !mqtt) return <p className="text-slate-500">Chargement…</p>;
 
   return (
     <div className="space-y-6 max-w-3xl">
       <h2 className="text-2xl font-bold text-slate-800">Configuration</h2>
 
-      <div className="bg-white rounded-lg shadow p-5">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Port série</h3>
-        <Field label="Port" value={cfg.serial.port} />
-        <Field label="Baud rate" value={cfg.serial.baudRate} />
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-5">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">MQTT</h3>
-        <Field label="Broker" value={cfg.mqtt.broker} />
-        <Field label="Topic" value={cfg.mqtt.topic} />
-        <Field label="Client ID" value={cfg.mqtt.clientId} />
-        <Field label="Authentification" value={cfg.mqtt.hasAuth ? 'Oui' : 'Non'} />
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-5">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Base de données</h3>
-        <Field label="Chemin" value={cfg.database.path} />
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-5">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Simulation</h3>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-slate-600">
-              État : <span className={`font-semibold ${cfg.simulation.enabled ? 'text-emerald-600' : 'text-slate-500'}`}>
-                {cfg.simulation.enabled ? 'ACTIVE' : 'Arrêtée'}
-              </span>
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Génère des événements factices toutes les 30s.
-            </p>
-          </div>
-          <button
-            disabled={busy}
-            onClick={onToggle}
-            className={`px-4 py-2 rounded text-white text-sm font-medium transition ${
-              cfg.simulation.enabled
-                ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-emerald-600 hover:bg-emerald-700'
-            } disabled:opacity-50`}
-          >
-            {cfg.simulation.enabled ? 'Arrêter' : 'Démarrer'}
-          </button>
+      <div className="bg-white rounded-lg shadow p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-700">Port série</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-sm">
+            <span className="block text-slate-500 text-xs mb-1">Port</span>
+            <input
+              className="w-full border rounded px-3 py-2 font-mono"
+              value={serial.port}
+              onChange={(e) => setSerial({ ...serial, port: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            <span className="block text-slate-500 text-xs mb-1">Baud rate</span>
+            <input
+              type="number"
+              className="w-full border rounded px-3 py-2 font-mono"
+              value={serial.baudRate}
+              onChange={(e) => setSerial({ ...serial, baudRate: Number(e.target.value) })}
+            />
+          </label>
         </div>
+        <button
+          disabled={busy}
+          onClick={saveSerial}
+          className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+        >Enregistrer & reconnecter</button>
       </div>
+
+      <div className="bg-white rounded-lg shadow p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-700">MQTT</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-sm col-span-2">
+            <span className="block text-slate-500 text-xs mb-1">Broker</span>
+            <input
+              className="w-full border rounded px-3 py-2 font-mono"
+              value={mqtt.broker}
+              onChange={(e) => setMqtt({ ...mqtt, broker: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            <span className="block text-slate-500 text-xs mb-1">Topic</span>
+            <input
+              className="w-full border rounded px-3 py-2 font-mono"
+              value={mqtt.topic}
+              onChange={(e) => setMqtt({ ...mqtt, topic: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            <span className="block text-slate-500 text-xs mb-1">Client ID</span>
+            <input
+              className="w-full border rounded px-3 py-2 font-mono"
+              value={mqtt.clientId}
+              onChange={(e) => setMqtt({ ...mqtt, clientId: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            <span className="block text-slate-500 text-xs mb-1">Username</span>
+            <input
+              className="w-full border rounded px-3 py-2"
+              value={mqtt.username ?? ''}
+              onChange={(e) => setMqtt({ ...mqtt, username: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            <span className="block text-slate-500 text-xs mb-1">Password</span>
+            <input
+              type="password"
+              className="w-full border rounded px-3 py-2"
+              placeholder={mqtt.hasAuth ? '••• (inchangé si vide)' : ''}
+              value={mqtt.password ?? ''}
+              onChange={(e) => setMqtt({ ...mqtt, password: e.target.value })}
+            />
+          </label>
+        </div>
+        <button
+          disabled={busy}
+          onClick={saveMqtt}
+          className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+        >Enregistrer & reconnecter</button>
+      </div>
+
+      {msg && (
+        <div className="text-sm text-slate-700 bg-slate-100 rounded px-4 py-2">{msg}</div>
+      )}
 
       <ModemPanel />
     </div>

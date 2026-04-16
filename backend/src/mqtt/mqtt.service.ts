@@ -25,6 +25,15 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     this.client?.end();
   }
 
+  async restart() {
+    await new Promise<void>((resolve) => {
+      if (!this.client) return resolve();
+      this.client.end(true, {}, () => resolve());
+    });
+    this.client = null;
+    this.connect();
+  }
+
   private connect() {
     const brokerUrl = process.env.MQTT_BROKER || 'mqtt://localhost:1883';
     const topic    = process.env.MQTT_TOPIC    || 'devices/data';
